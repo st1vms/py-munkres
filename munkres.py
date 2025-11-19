@@ -1,33 +1,13 @@
 """Munkres Algorithm implementation (Hungarian Algorithm)"""
 
-from typing import Callable, List
-
-
-def __reduced_cost(
-    cost_matrix: List[List[int | float]],
-    potentials_u: List[int | float],
-    potentials_v: List[int | float],
-    i: int,
-    j: int,
-    negative_slack: int | float
-) -> int | float:
-    """Returns the reduced cost given the potentials"""
-    return cost_matrix[i][j] - potentials_u[i] - potentials_v[j] + (negative_slack * 3)
-
-
-def __optimal_check(cost_matrix, assignments, u_potentials, v_potentials) -> bool:
-    """Performs optimality check given the cost matrix, assignments, and potentials"""
-    return sum(u_potentials) + sum(v_potentials) == sum(
-        [cost_matrix[i][j] for i, j in enumerate(assignments)]
-    )
+from typing import Callable
 
 
 def munkres(
-    a: List[int | float],
-    b: List[int | float],
+    a: list[int | float],
+    b: list[int | float],
     cost_function: Callable[[int | float, int | float], int | float],
-) -> List[int | float]:
-    """."""
+) -> tuple[list[int | float], bool]:
 
     # Get the input sizes
     N = len(a)
@@ -68,7 +48,7 @@ def munkres(
         row = []
         for j in range(PAD_M):
             if i >= N or j >= M:
-                # This cell involves a padded cell
+                # Initialize padding cells to one
                 row.append(0)
                 continue
 
@@ -87,44 +67,136 @@ def munkres(
     # negative_slack >= 0
     negative_slack = abs(negative_slack)
 
-    # First assignment by calculating reduced cost matrix
-    Z = []
-    inversions = [-1 for _ in range(PAD_M)]
-    first_unassigned_pos = -1
-    for i in range(PAD_N):
+    Z = [-1 for _ in range(PAD_N)]  # Assignments
+    inversions = [-1 for _ in range(PAD_M)]  # Inversion vector for these assignments
 
-        # Avoid creating extra assignments
-        if i < N:
-            Z.append(-1)  # Unassigned by default
+    # Iterate over non padded rows
+    for i in Z[:N]:
 
-        for j in range(PAD_M):
-            rc = __reduced_cost(C, u, v, i, j, negative_slack)
-            if (
-                i < N  # Don't assign padding units
-                and Z[i] == -1  # Only assign one time per row
-                and rc == 0  # Must be a zero for assignment
-                and inversions[j] != -1  # Column must be free
-            ):
-                inversions[j] = i  # Occupy column
-                Z[i] = j if j < M else -1  # Prevent assignment to padding units
-                break
-        
-        if Z[i] == -1 and first_unassigned_pos == -1:
-            first_unassigned_pos = i
+        # Run augmented path search for this row
+        path_found = False
+        while not path_found:
+            path, S, T, path_found = __search_augmented_path(i, C, inversions, u, v)
+            if not path_found:
+                # Update potentials
+                delta = min(
+                    __reduced_cost(C, u, v, row, col, negative_slack)
+                    for row in range(S)  # All visited rows
+                    for col in range(PAD_M)
+                    if col not in T  # All unvisited columns
+                )
 
-    # Check if solution is already optimal
-    if __optimal_check(C, Z, u, v):
-        return Z
+                u = [u_i + delta for i, u_i in enumerate(u) if i in S]
+                v = [v_i + delta for i, v_i in enumerate(v) if i in T]
+                continue
 
-    S = set((first_unassigned_pos,))
-    T = set()
+            # Invert path to assign this row
+            for node in path:
+                i, j = node
+
+                # Check if this node represent an assignment
+                if Z[i] == j:
+                    # Invert the assignment
+                    Z[i] = -1
+                    inversions[j] = -1
+                else:
+                    # Perform assignment
+                    Z[i] = j
+                    inversions[j] = i
+
+    # Return assignments and a flag indicating if the solution is optimal
+    return Z, __optimal_check(C, Z, u, v)
 
 
+def __optimal_check(cost_matrix, assignments, u_potentials, v_potentials) -> bool:
+    # For the solution to be optimal:
+    # The sum of potentials must be equal the sum of the total cost of assignments
+    return sum(u_potentials) + sum(v_potentials) == sum(
+        [cost_matrix[i][j] for i, j in enumerate(assignments)]
+    )
 
-    return None
+
+def __reduced_cost(
+    cost_matrix: list[list[int | float]],
+    potentials_u: list[int | float],
+    potentials_v: list[int | float],
+    i: int,
+    j: int,
+    negative_slack: int | float,
+) -> int | float:
+    return cost_matrix[i][j] - potentials_u[i] - potentials_v[j] + (negative_slack * 3)
 
 
-A = [6, 7, 5]
-B = [8, 1, 4]
+def __search_augmented_path(
+    row: int,
+    cost_matrix: int,
+    inversionVector: list[int | float],
+    u_potential: int | float,
+    v_potential: int | float,
+    negative_slack: int | float,
+    _visited_rows: set[int | float] = None,
+    _visited_columns: set[int | float] = None,
+    path_found: bool = False,
+) -> tuple[list[tuple[int]], set, set, bool]:
 
-print(munkres(A, B, lambda a, b: a - b))
+    if _visited_rows is None:
+        _visited_rows = set((row,))
+
+    if _visited_columns is None:
+        _visited_columns = set()
+
+    path = []
+    for j in range(len(cost_matrix[row])):
+        # Find zeroed reduced cost in this row
+        rc = __reduced_cost(
+            cost_matrix, u_potential, v_potential, row, j, negative_slack
+        )
+        if rc != 0 or j in _visited_columns:
+            continue
+
+        # Initialize a new path
+        path = [(row, j)]
+
+        # Check if this column is free
+        if inversionVector[j] == -1:
+            return path, _visited_rows, _visited_columns, True
+
+        # Check if the path search is stuck
+        if inversionVector[j] in _visited_rows:
+            return path, _visited_rows, _visited_columns, False
+
+        _visited_columns.add(j)  # Column visited
+        _visited_rows.add(inversionVector[j])  # Visit the row that occupies this column
+
+        # Walk through augmented path to find a free column
+        new_path, _visited_rows, _visited_columns, path_found = __search_augmented_path(
+            inversionVector[j],
+            cost_matrix,
+            inversionVector,
+            u_potential,
+            v_potential,
+            negative_slack,
+            _visited_rows=_visited_rows,
+            _visited_columns=_visited_columns,
+            path_found=path_found,
+        )
+        path.extend(new_path)
+        if path_found:
+            # Break search and return result
+            break
+
+    # Return path and visited rows, columns
+    return path, _visited_rows, _visited_columns, path_found
+
+
+if __name__ == "__main__":
+
+    def difference(a: int | float, b: int | float) -> int | float:
+        return a - b
+
+    def __test_main():
+        A = [6, 7, 5]
+        B = [8, 1, 4]
+        print(munkres(A, B, difference))
+
+    __test_main()
