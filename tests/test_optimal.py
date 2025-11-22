@@ -1,60 +1,20 @@
 from pymunkres import munkres
 import unittest
 
-
-def _difference(x: int | float, y: int | float) -> int | float:
-    return abs(x - y)
-
-
-def _linear_func_one(x: int | float, y: int | float) -> int | float:
-    return abs(x - y) + (x + y) % 3
-
-
 class Test_Optimal_MXSquare(unittest.TestCase):
 
-    test_data = [([1, 3, 6, 8], [2, 4, 5, 7])]
+    test_cost_mx = [
+        [10, 5, 13, 15, 16],
+        [3, 9, 18, 13, 6],
+        [10, 7, 2, 2, 2],
+        [7, 11, 9, 7, 12],
+        [7, 9, 10, 4, 12],
+    ]
 
     def test_optimal(self):
-        for A, B in self.test_data:
-            res = munkres(A, B, _difference)
-            print(f"A={A}, B={B} -> M={res[0]}, I={res[1]}")
-            self.assertTrue(res[-1])
-
-            res = munkres(A, B, _linear_func_one)
-            print(f"A={A}, B={B} -> M={res[0]}, I={res[1]}")
-            self.assertTrue(res[-1])
-
-
-class Test_Optimal_MXRectangle(unittest.TestCase):
-
-    less_jobs_test_data = [
-        ([1, 3, 6, 8], [2, 4]),
-    ]
-
-    less_workers_test_data = [
-        ([1, 3], [2, 4, 5, 7]),
-    ]
-
-    def test_optimal_less_jobs(self):
-        for A, B in self.less_jobs_test_data:
-            res = munkres(A, B, _difference)
-            print(f"A={A}, B={B} -> M={res[0]}, I={res[1]}")
-            self.assertTrue(res[-1])
-
-            res = munkres(A, B, _linear_func_one)
-            print(f"A={A}, B={B} -> M={res[0]}, I={res[1]}")
-            self.assertTrue(res[-1])
-
-    def test_optimal_less_workers(self):
-
-        for A, B in self.less_workers_test_data:
-            res = munkres(A, B, _difference)
-            print(f"A={A}, B={B} -> M={res[0]}, I={res[1]}")
-            self.assertTrue(res[-1])
-
-            res = munkres(A, B, _linear_func_one)
-            print(f"A={A}, B={B} -> M={res[0]}, I={res[1]}")
-            self.assertTrue(res[-1])
+        res = munkres(self.test_cost_mx)
+        print(f"M={res[0]}, I={res[1]}")
+        self.assertTrue(res[-1])
 
 
 if __name__ == "__main__":

@@ -1,17 +1,13 @@
 """Munkres Algorithm implementation (Hungarian Algorithm)"""
 
-from typing import Callable
-
 
 def munkres(
-    a: list[int | float],
-    b: list[int | float],
-    cost_function: Callable[[int | float, int | float], int | float],
+    cost_matrix: list[list[int | float]],
 ) -> tuple[list[int | float], list[int | float], bool]:
 
     # Get the input sizes
-    N = len(a)
-    M = len(b)
+    N = len(cost_matrix)
+    M = len(cost_matrix[0])
 
     # Check if any input is empty
     assert N > 0 and M > 0
@@ -20,46 +16,18 @@ def munkres(
     if N == M == 1:
         return [0]
 
-    # Use padded input sizes
-    PAD_N = N
-    PAD_M = M
-
-    # Padding check
-    if N > M:
-        PAD_M = N
-    elif M > N:
-        PAD_N = M
-
-    # Potentials U and V
-    u = [float("inf") for _ in range(N)]
-    v = [float("inf") for _ in range(M)]
-
-    # Cost matrix
-    C = []
-    for i in range(PAD_N):
-        row = []
-        for j in range(PAD_M):
-            if i >= N or j >= M:
-                # Initialize padding cells to one
-                row.append(0)
-                continue
-            # Calculate the cost for this assignment
-            cost = cost_function(a[i], b[j])
-            row.append(cost)
-        C.append(row)
-
     # Calculate potentials U (minimum for each row)
-    u = [min(C[i][:M]) for i in range(N)]
+    u = [min(cost_matrix[i][:M]) for i in range(N)]
 
     # Calculate potentials V (minimum for each column - u[i])
     v = []
     for j in range(M):
         v.append(float("inf"))
         for i in range(N):
-            v[j] = min(v[j], C[i][j] - u[i])
+            v[j] = min(v[j], cost_matrix[i][j] - u[i])
 
-    Z = [-1 for _ in range(PAD_N)]  # Assignments
-    inversions = [-1 for _ in range(PAD_M)]  # Inversion vector for these assignments
+    Z = [-1 for _ in range(N)]  # Assignments
+    inversions = [-1 for _ in range(M)]  # Inversion vector for these assignments
 
     # Iterate over non padded rows
     for i in range(N):
@@ -69,16 +37,19 @@ def munkres(
         while not path_found:
             S = set((i,))
             T = set()
-            path, path_found = __search_augmented_path(i, C, M, inversions, u, v, S, T)
+            path, path_found = __search_augmented_path(
+                i, cost_matrix, M, inversions, u, v, S, T
+            )
             if not path_found:
                 # Update potentials
                 delta = min(
                     [
-                        __reduced_cost(C, u, v, row, col)
+                        __reduced_cost(cost_matrix, u, v, row, col)
                         for row in S  # All visited rows
                         for col in range(M)
                         if col not in T  # All unvisited columns
-                    ] or (0,)
+                    ]
+                    or (0,)
                 )
 
                 if delta == 0:
@@ -104,7 +75,7 @@ def munkres(
                     inversions[j] = i
 
     # Return assignments, inversions, and a flag indicating if the solution is optimal
-    return Z[:N], inversions[:M], __optimal_check(C, Z, u, v)
+    return Z[:N], inversions[:M], __optimal_check(cost_matrix, Z, u, v)
 
 
 def __optimal_check(cost_matrix, assignments, u_potentials, v_potentials) -> bool:
@@ -120,6 +91,7 @@ def __optimal_check(cost_matrix, assignments, u_potentials, v_potentials) -> boo
         v_sum += v_potentials[i]
         cost_sum += cost_matrix[i][j]
     return u_sum + v_sum == cost_sum
+
 
 def __reduced_cost(
     cost_matrix: list[list[int | float]],
