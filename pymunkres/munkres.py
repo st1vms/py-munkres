@@ -17,7 +17,7 @@ def munkres(
         return [0]
 
     # Calculate potentials U (minimum for each row)
-    u = [min(cost_matrix[i][:M]) for i in range(N)]
+    u = [min(cost_matrix[i]) for i in range(N)]
 
     # Calculate potentials V (minimum for each column - u[i])
     v = []
