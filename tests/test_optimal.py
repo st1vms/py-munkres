@@ -1,4 +1,4 @@
-from pymunkres.pymunkres import munkres
+from pymunkres import munkres
 import unittest
 
 
