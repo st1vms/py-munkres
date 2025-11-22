@@ -7,7 +7,7 @@ def munkres(
     a: list[int | float],
     b: list[int | float],
     cost_function: Callable[[int | float, int | float], int | float],
-) -> tuple[list[int | float], bool]:
+) -> tuple[list[int | float], list[int | float], bool]:
 
     # Get the input sizes
     N = len(a)
@@ -30,9 +30,6 @@ def munkres(
     elif M > N:
         PAD_N = M
 
-    # Negative slack used to pad negative costs
-    negative_slack = 0
-
     # Potentials U and V
     u = [float("inf") for _ in range(N)]
     v = [float("inf") for _ in range(M)]
@@ -40,31 +37,26 @@ def munkres(
     # Cost matrix
     C = []
     for i in range(PAD_N):
-
         row = []
         for j in range(PAD_M):
             if i >= N or j >= M:
                 # Initialize padding cells to one
                 row.append(0)
                 continue
-
             # Calculate the cost for this assignment
             cost = cost_function(a[i], b[j])
-
-            # Update minimum row cost (potential U)
-            u[i] = min(u[i], cost)
-
-            # Update minimum column cost (potential V)
-            v[j] = min(v[j], cost)
-
-            # Update negative slack
-            negative_slack = min(negative_slack, cost)
-
             row.append(cost)
         C.append(row)
 
-    # negative_slack >= 0
-    negative_slack = abs(negative_slack)
+    # Calculate potentials U (minimum for each row)
+    u = [min(C[i]) for i in range(N)]
+
+    # Calculate potentials V (minimum for each column - u[i])
+    v = []
+    for j in range(M):
+        v.append(float("inf"))
+        for i in range(N):
+            v[j] = min(v[j], C[i][j] - u[i])
 
     Z = [-1 for _ in range(PAD_N)]  # Assignments
     inversions = [-1 for _ in range(PAD_M)]  # Inversion vector for these assignments
@@ -75,13 +67,11 @@ def munkres(
         # Run augmented path search for this row
         path_found = False
         while not path_found:
-            path, S, T, path_found = __search_augmented_path(
-                i, C, inversions, u, v, negative_slack
-            )
+            path, S, T, path_found = __search_augmented_path(i, C, inversions, u, v)
             if not path_found:
                 # Update potentials
                 delta = min(
-                    __reduced_cost(C, u, v, row, col, negative_slack)
+                    __reduced_cost(C, u, v, row, col)
                     for row in S  # All visited rows
                     for col in range(PAD_M)
                     if col not in T  # All unvisited columns
@@ -105,8 +95,8 @@ def munkres(
                     Z[i] = j
                     inversions[j] = i
 
-    # Return assignments and a flag indicating if the solution is optimal
-    return Z, __optimal_check(C, Z, u, v)
+    # Return assignments, inversions, and a flag indicating if the solution is optimal
+    return Z[:N], inversions[:M], __optimal_check(C, Z, u, v)
 
 
 def __optimal_check(cost_matrix, assignments, u_potentials, v_potentials) -> bool:
@@ -123,9 +113,8 @@ def __reduced_cost(
     potentials_v: list[int | float],
     i: int,
     j: int,
-    negative_slack: int | float,
 ) -> int | float:
-    return cost_matrix[i][j] - potentials_u[i] - potentials_v[j] + (negative_slack * 3)
+    return cost_matrix[i][j] - potentials_u[i] - potentials_v[j]
 
 
 def __search_augmented_path(
@@ -134,7 +123,6 @@ def __search_augmented_path(
     inversionVector: list[int | float],
     u_potential: list[int | float],
     v_potential: list[int | float],
-    negative_slack: int | float,
     S: set[int | float] = None,
     T: set[int | float] = None,
     path_found: bool = False,
@@ -151,9 +139,7 @@ def __search_augmented_path(
     path = []
     for j in range(len(cost_matrix[row_i])):
         # Find zeroed reduced cost in this row
-        rc = __reduced_cost(
-            cost_matrix, u_potential, v_potential, row_i, j, negative_slack
-        )
+        rc = __reduced_cost(cost_matrix, u_potential, v_potential, row_i, j)
         if rc != 0 or j in T:
             continue
 
@@ -178,7 +164,6 @@ def __search_augmented_path(
             inversionVector,
             u_potential,
             v_potential,
-            negative_slack,
             S=S,
             T=T,
             path_found=path_found,
@@ -191,15 +176,3 @@ def __search_augmented_path(
     # Return path and visited rows, columns
     return path, S, T, path_found
 
-
-if __name__ == "__main__":
-
-    def difference(a: int | float, b: int | float) -> int | float:
-        return abs(a - b)
-
-    def __test_main():
-        A = [10, 9, 4, 3]
-        B = [10, 9, 3, 2]
-        print(munkres(A, B, difference))
-
-    __test_main()
