@@ -1,9 +1,11 @@
 """Munkres Algorithm implementation (Hungarian Algorithm)"""
 
+__EPS = 1e-9  # Floating point tolerance
 
 def munkres(
     cost_matrix: list[list[int | float]],
 ) -> tuple[list[int | float], list[int | float], bool]:
+
 
     # Get the input sizes
     N = len(cost_matrix)
@@ -52,7 +54,7 @@ def munkres(
                     or (0,)
                 )
 
-                if delta == 0:
+                if abs(delta) < __EPS:
                     # Loop check
                     break
 
@@ -119,7 +121,7 @@ def __search_augmented_path(
     for j in range(len(cost_matrix[row_i])):
         # Find zeroed reduced cost in this row
         rc = __reduced_cost(cost_matrix, u_potential, v_potential, row_i, j)
-        if rc != 0 or j in T:
+        if abs(rc) > __EPS or j in T:
             continue
 
         # Save edge
