@@ -75,7 +75,7 @@ def munkres(
                     inversions[j] = i
 
     # Return assignments, inversions, and a flag indicating if the solution is optimal
-    return Z[:N], inversions[:M], __optimal_check(cost_matrix, Z, u, v)
+    return Z, inversions, __optimal_check(cost_matrix, Z, u, v)
 
 
 def __optimal_check(cost_matrix, assignments, u_potentials, v_potentials) -> bool:
@@ -116,7 +116,7 @@ def __search_augmented_path(
 ) -> tuple[list[tuple[int]], bool]:
 
     path = []
-    for j in range(len(cost_matrix[row_i][:M])):
+    for j in range(len(cost_matrix[row_i])):
         # Find zeroed reduced cost in this row
         rc = __reduced_cost(cost_matrix, u_potential, v_potential, row_i, j)
         if rc != 0 or j in T:
