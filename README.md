@@ -15,14 +15,14 @@ cost = [
     [7, 9, 10, 4, 12],
 ]
 
-assignments, inversions, is_optimal = munkres(cost, len(cost), len(cost[0]))
+assignments, inversions, is_optimal = munkres(cost)
 print("row -> col:", assignments)
 print("col -> row:", inversions)
 print("optimal:", is_optimal)
 ```
 
 Cost matrix
-- The cost matrix is a 2-D list (N x M) where cost[i][j] is the numeric cost of assigning row i to column j.
+- The cost matrix is a 2-D list (N x N) where cost[i][j] is the numeric cost of assigning row i to column j.
 - Rows typically represent "agents" (e.g., workers), columns represent "tasks"; the algorithm finds assignments that minimize the total cost.
 - Entries can be integers or floats. The matrix must be non-empty and square (equal number of rows and columns); rectangular and irregular matrices must be filled with zero costs or a default cost appropriate to the problem.
 

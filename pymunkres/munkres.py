@@ -4,12 +4,12 @@ __EPS = 1e-9  # Floating point tolerance
 
 
 def munkres(
-    cost_matrix: list[list[int | float]], N: int, M: int
+    cost_matrix: list[list[int | float]],
 ) -> tuple[list[int | float], list[int | float], bool]:
     """
     #### Cost matrix
 
-    The `cost_matrix` is a 2-D list (`N` x `M`) where cost_matrix[i][j] is the numeric cost of assigning row i to column j.
+    The `cost_matrix` is a 2-D list (N x N) where cost_matrix[i][j] is the numeric cost of assigning row i to column j.
     Rows typically represent "agents" (e.g., workers), columns represent "tasks"; the algorithm finds assignments that minimize the total cost.
     Entries can be integers or floats. The matrix must be non-empty and square (equal number of rows and columns); rectangular and irregular matrices must be filled with zero costs or a default cost appropriate to the problem.
 
@@ -20,32 +20,26 @@ def munkres(
     - `is_optimal` (***bool***): indicates whether the algorithm's potentials certify optimality.
     """
 
-    # Check if number of rows matches N
-    assert len(cost_matrix) == N
-
-    # Check if any input is empty
-    assert N > 0 and M > 0
+    # Get the length of the square matrix
+    N = len(cost_matrix)
 
     # Base 1->1 case
-    if N == M == 1:
+    if N == 1:
         return [0]
 
     # Calculate potentials U (minimum for each row)
-    u = []
-    for i in range(N):
-        # Check if number of rows matches M
-        assert len(cost_matrix[i]) == M
-        u.append(min(cost_matrix[i]))
+    u = [min(cost_matrix[i]) for i in range(N)]
 
-    # Calculate potentials V (minimum for each column - u[i])
     v = []
-    for j in range(M):
-        v.append(float("inf"))
-        for i in range(N):
-            v[j] = min(v[j], cost_matrix[i][j] - u[i])
+    Z = []  # Assignments
+    inversions = []  # Inversion vector for these assignments
+    for i in range(N):
+        # -1 = Not assigned
+        Z.append(-1)
+        inversions.append(-1)
 
-    Z = [-1 for _ in range(N)]  # Assignments
-    inversions = [-1 for _ in range(M)]  # Inversion vector for these assignments
+        # Calculate potentials V (minimum for each column - u[i])
+        v.append(min([cost_matrix[i][j] - u[i] for j in range(N)]))
 
     # Iterate over unassigned rows
     for i in range(N):
@@ -56,7 +50,7 @@ def munkres(
             S = set((i,))
             T = set()
             path, path_found = __search_augmented_path(
-                i, cost_matrix, M, inversions, u, v, S, T
+                i, cost_matrix, N, inversions, u, v, S, T
             )
             if not path_found:
                 # Update potentials
@@ -64,7 +58,7 @@ def munkres(
                     [
                         __reduced_cost(cost_matrix, u, v, row, col)
                         for row in S  # All visited rows
-                        for col in range(M)
+                        for col in range(N)
                         if col not in T  # All unvisited columns
                     ]
                     or (0,)
@@ -124,7 +118,7 @@ def __reduced_cost(
 def __search_augmented_path(
     row_i: int,
     cost_matrix: int,
-    M: int,
+    N: int,
     inversionVector: list[int | float],
     u_potential: list[int | float],
     v_potential: list[int | float],
@@ -145,6 +139,7 @@ def __search_augmented_path(
 
         # Check if this column is free
         if inversionVector[j] == -1:
+            # TODO Extend path search and promote best path
             return path, True
 
         # Check if the path search is stuck
@@ -158,7 +153,7 @@ def __search_augmented_path(
         new_path, path_found = __search_augmented_path(
             inversionVector[j],
             cost_matrix,
-            M,
+            N,
             inversionVector,
             u_potential,
             v_potential,
@@ -169,6 +164,7 @@ def __search_augmented_path(
         path.extend(new_path)
         if path_found:
             # Break search and return result
+            # TODO Extend path search and promote best path
             break
 
     # Return path and visited rows, columns

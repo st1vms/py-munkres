@@ -13,9 +13,7 @@ class Test_Optimal_MXSquare(unittest.TestCase):
     ]
 
     def test_optimal(self):
-        res = munkres(
-            self.test_cost_mx, len(self.test_cost_mx), len(self.test_cost_mx[0])
-        )
+        res = munkres(self.test_cost_mx)
         print(f"M={res[0]}, I={res[1]}")
         self.assertTrue(res[-1])
 
