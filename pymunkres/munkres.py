@@ -49,7 +49,7 @@ def munkres(
         C.append(row)
 
     # Calculate potentials U (minimum for each row)
-    u = [min(C[i]) for i in range(N)]
+    u = [min(C[i][:M]) for i in range(N)]
 
     # Calculate potentials V (minimum for each column - u[i])
     v = []
@@ -67,18 +67,26 @@ def munkres(
         # Run augmented path search for this row
         path_found = False
         while not path_found:
-            path, S, T, path_found = __search_augmented_path(i, C, inversions, u, v)
+            S = set((i,))
+            T = set()
+            path, path_found = __search_augmented_path(i, C, M, inversions, u, v, S, T)
             if not path_found:
                 # Update potentials
                 delta = min(
-                    __reduced_cost(C, u, v, row, col)
-                    for row in S  # All visited rows
-                    for col in range(PAD_M)
-                    if col not in T  # All unvisited columns
+                    [
+                        __reduced_cost(C, u, v, row, col)
+                        for row in S  # All visited rows
+                        for col in range(M)
+                        if col not in T  # All unvisited columns
+                    ] or (0,)
                 )
 
+                if delta == 0:
+                    # Loop check
+                    break
+
                 u = [u_i + delta if i in S else u_i for i, u_i in enumerate(u)]
-                v = [v_i + delta if i in T else v_i for i, v_i in enumerate(v)]
+                v = [v_i - delta if i in T else v_i for i, v_i in enumerate(v)]
                 continue
 
             # Invert path to assign this row
@@ -102,10 +110,16 @@ def munkres(
 def __optimal_check(cost_matrix, assignments, u_potentials, v_potentials) -> bool:
     # For the solution to be optimal:
     # The sum of potentials must be equal the sum of the total cost of assignments
-    return sum(u_potentials) + sum(v_potentials) == sum(
-        [cost_matrix[i][j] for i, j in enumerate(assignments)]
-    )
-
+    u_sum = 0
+    v_sum = 0
+    cost_sum = 0
+    for i, j in enumerate(assignments):
+        if j == -1:
+            continue
+        u_sum += u_potentials[i]
+        v_sum += v_potentials[i]
+        cost_sum += cost_matrix[i][j]
+    return u_sum + v_sum == cost_sum
 
 def __reduced_cost(
     cost_matrix: list[list[int | float]],
@@ -120,24 +134,17 @@ def __reduced_cost(
 def __search_augmented_path(
     row_i: int,
     cost_matrix: int,
+    M: int,
     inversionVector: list[int | float],
     u_potential: list[int | float],
     v_potential: list[int | float],
-    S: set[int | float] = None,
-    T: set[int | float] = None,
+    S: set[int | float],
+    T: set[int | float],
     path_found: bool = False,
-) -> tuple[list[tuple[int]], set, set, bool]:
-
-    if S is None:
-        # Initialize visited rows
-        S = set((row_i,))
-
-    if T is None:
-        # Initialize visited columns
-        T = set()
+) -> tuple[list[tuple[int]], bool]:
 
     path = []
-    for j in range(len(cost_matrix[row_i])):
+    for j in range(len(cost_matrix[row_i][:M])):
         # Find zeroed reduced cost in this row
         rc = __reduced_cost(cost_matrix, u_potential, v_potential, row_i, j)
         if rc != 0 or j in T:
@@ -148,24 +155,25 @@ def __search_augmented_path(
 
         # Check if this column is free
         if inversionVector[j] == -1:
-            return path, S, T, True
+            return path, True
 
         # Check if the path search is stuck
         if inversionVector[j] in S:
-            return [], S, T, False
+            return [], False
 
         T.add(j)  # Column visited
         S.add(inversionVector[j])  # Visit the row that occupies this column
 
         # Walk through augmented path to find a free column
-        new_path, S, T, path_found = __search_augmented_path(
+        new_path, path_found = __search_augmented_path(
             inversionVector[j],
             cost_matrix,
+            M,
             inversionVector,
             u_potential,
             v_potential,
-            S=S,
-            T=T,
+            S,
+            T,
             path_found=path_found,
         )
         path.extend(new_path)
@@ -174,5 +182,4 @@ def __search_augmented_path(
             break
 
     # Return path and visited rows, columns
-    return path, S, T, path_found
-
+    return path, path_found
