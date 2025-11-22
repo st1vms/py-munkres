@@ -2,14 +2,26 @@
 
 __EPS = 1e-9  # Floating point tolerance
 
+
 def munkres(
-    cost_matrix: list[list[int | float]],
+    cost_matrix: list[list[int | float]], N: int, M: int
 ) -> tuple[list[int | float], list[int | float], bool]:
+    """
+    #### Cost matrix
 
+    The `cost_matrix` is a 2-D list (`N` x `M`) where cost_matrix[i][j] is the numeric cost of assigning row i to column j.
+    Rows typically represent "agents" (e.g., workers), columns represent "tasks"; the algorithm finds assignments that minimize the total cost.
+    Entries can be integers or floats. The matrix must be non-empty and square (equal number of rows and columns); rectangular and irregular matrices must be filled with zero costs or a default cost appropriate to the problem.
 
-    # Get the input sizes
-    N = len(cost_matrix)
-    M = len(cost_matrix[0])
+    #### Return values
+
+    - `assignments` (***list[int]***): `assignments[i] = j` if row `i` is assigned to column `j`, or `-1` if **unassigned**.
+    - `inversions` (***list[int]***): `inversions[j] = i` if column `j` is assigned to row `i`, or `-1` if **free**.
+    - `is_optimal` (***bool***): indicates whether the algorithm's potentials certify optimality.
+    """
+
+    # Check if number of rows matches N
+    assert len(cost_matrix) == N
 
     # Check if any input is empty
     assert N > 0 and M > 0
@@ -19,7 +31,11 @@ def munkres(
         return [0]
 
     # Calculate potentials U (minimum for each row)
-    u = [min(cost_matrix[i]) for i in range(N)]
+    u = []
+    for i in range(N):
+        # Check if number of rows matches M
+        assert len(cost_matrix[i]) == M
+        u.append(min(cost_matrix[i]))
 
     # Calculate potentials V (minimum for each column - u[i])
     v = []
@@ -31,7 +47,7 @@ def munkres(
     Z = [-1 for _ in range(N)]  # Assignments
     inversions = [-1 for _ in range(M)]  # Inversion vector for these assignments
 
-    # Iterate over non padded rows
+    # Iterate over unassigned rows
     for i in range(N):
 
         # Run augmented path search for this row
@@ -63,10 +79,10 @@ def munkres(
                 continue
 
             # Invert path to assign this row
-            for node in path:
-                i, j = node
+            for edge in path:
+                i, j = edge
 
-                # Check if this node represent an assignment
+                # Check if this edge represent an assignment
                 if Z[i] == j:
                     # Invert the assignment
                     Z[i] = -1

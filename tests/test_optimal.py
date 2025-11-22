@@ -1,6 +1,7 @@
 from pymunkres import munkres
 import unittest
 
+
 class Test_Optimal_MXSquare(unittest.TestCase):
 
     test_cost_mx = [
@@ -12,7 +13,9 @@ class Test_Optimal_MXSquare(unittest.TestCase):
     ]
 
     def test_optimal(self):
-        res = munkres(self.test_cost_mx)
+        res = munkres(
+            self.test_cost_mx, len(self.test_cost_mx), len(self.test_cost_mx[0])
+        )
         print(f"M={res[0]}, I={res[1]}")
         self.assertTrue(res[-1])
 
