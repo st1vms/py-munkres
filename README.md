@@ -15,7 +15,7 @@ cost = [
     [7, 9, 10, 4, 12],
 ]
 
-assignments, inversions, is_optimal = munkres(cost)
+assignments, inversions, is_optimal = munkres(cost, len(cost), len(cost[0]))
 print("row -> col:", assignments)
 print("col -> row:", inversions)
 print("optimal:", is_optimal)
