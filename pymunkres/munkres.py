@@ -25,21 +25,15 @@ def munkres(
 
     # Base 1->1 case
     if N == 1:
-        return [0]
+        return [0], [0], True
 
     # Calculate potentials U (minimum for each row)
     u = [min(cost_matrix[i]) for i in range(N)]
 
-    v = []
-    Z = []  # Assignments
-    inversions = []  # Inversion vector for these assignments
-    for i in range(N):
-        # -1 = Not assigned
-        Z.append(-1)
-        inversions.append(-1)
+    v = [min(cost_matrix[i][j] - u[i] for i in range(N)) for j in range(N)]
 
-        # Calculate potentials V (minimum for each column - u[i])
-        v.append(min([cost_matrix[i][j] - u[i] for j in range(N)]))
+    Z = [-1] * N  # Assignments
+    inversions = [-1] * N  # Inversion vector for these assignments
 
     # Iterate over unassigned rows
     for i in range(N):
