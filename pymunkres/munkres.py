@@ -51,9 +51,9 @@ def munkres(
                 delta = min(
                     [
                         __reduced_cost(cost_matrix, u, v, row, col)
-                        for row in S  # All visited rows
+                        for row in range(N)
                         for col in range(N)
-                        if col not in T  # All unvisited columns
+                        if row not in S and col not in T  # All unvisited rows and columns
                     ]
                     or (0,)
                 )
