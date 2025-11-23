@@ -30,47 +30,60 @@ def munkres(
     # Calculate potentials U (minimum for each row)
     u = [min(cost_matrix[i]) for i in range(N)]
 
+    # Calculate potentials V
+    # (minimum for each column - u[i])
     v = [min(cost_matrix[i][j] - u[i] for i in range(N)) for j in range(N)]
 
-    Z = [-1] * N  # Assignments
-    inversions = [-1] * N  # Inversion vector for these assignments
+    # Initialize assignments (Z[i] -> j)
+    Z = [-1] * N
+
+    # Initialize inversion vector (inversions[j] -> i)
+    inversions = [-1] * N
 
     # Iterate over unassigned rows
     for i in range(N):
-        
+
         # Run augmented path search for this row
         path_found = False
         while not path_found:
+
+            # Initialize alternated path
             S = set((i,))
             T = set()
+
+            # Walk through the alternated path to find an augmented path
             path, path_found = __search_augmented_path(
                 i, cost_matrix, N, inversions, u, v, S, T
             )
             if not path_found:
-                # Update potentials
+                # Calculate delta
+                # (minimum reduced cost considering all visited rows,
+                #  and all unvisited columns in the alternated path)
                 delta = min(
                     [
                         __reduced_cost(cost_matrix, u, v, row, col)
-                        for row in S
+                        for row in S  # All visited rows
                         for col in range(N)
-                        if col not in T  # All unvisited rows and columns
+                        if col not in T  # All unvisited columns
                     ]
                     or (0,)
                 )
 
                 if abs(delta) < __EPS:
-                    # Loop check
+                    # In theory this should not happen,
+                    # if it happens return assigments with path_found = False
                     break
 
+                # Update potentials
                 u = [u_i + delta if i in S else u_i for i, u_i in enumerate(u)]
                 v = [v_i - delta if i in T else v_i for i, v_i in enumerate(v)]
                 continue
 
-            # Invert path to assign this row
+            # Walk through augmented path and invert each edge to assign this row
             for edge in path:
                 i, j = edge
 
-                # Check if this edge represent an assignment
+                # Check if this edge represents an assignment
                 if Z[i] == j:
                     # Invert the assignment
                     Z[i] = -1
@@ -81,10 +94,10 @@ def munkres(
                     inversions[j] = i
 
     # Return assignments, inversions, and a flag indicating if the solution is optimal
-    return Z, inversions, __optimal_check(cost_matrix, Z, u, v)
+    return Z, inversions, __optimality_check(cost_matrix, Z, u, v)
 
 
-def __optimal_check(cost_matrix, assignments, u_potentials, v_potentials) -> bool:
+def __optimality_check(cost_matrix, assignments, u_potentials, v_potentials) -> bool:
     # For the solution to be optimal:
     # The sum of potentials must be equal the sum of the total cost of assignments
     u_sum = 0
@@ -110,6 +123,7 @@ def __reduced_cost(
     i: int,
     j: int,
 ) -> int | float:
+    # The reduced cost must always be >= 0
     return cost_matrix[i][j] - potentials_u[i] - potentials_v[j]
 
 
@@ -125,28 +139,31 @@ def __search_augmented_path(
     path_found: bool = False,
 ) -> tuple[list[tuple[int]], bool]:
 
+    # Initialize (sub)path
     path = []
     for j in range(len(cost_matrix[row_i])):
         # Find zeroed reduced cost in this row
         rc = __reduced_cost(cost_matrix, u_potential, v_potential, row_i, j)
-        if abs(rc) > __EPS or j in T:
+        if abs(rc) > __EPS or j in T:  # Also skip visited columns
             continue
 
-        # Save edge
+        # Initialize subpath
         path = [(row_i, j)]
 
         # Check if this column is free
         if inversionVector[j] == -1:
+            # Return the augmented path
             return path, True
 
-        # Check if the path search is stuck
+        # Check if the subpath brings to a cycle
         if inversionVector[j] in S:
             return [], False
 
-        T.add(j)  # Column visited
+        # Update alternated path
+        T.add(j)  # Add j to the visited columns
         S.add(inversionVector[j])  # Visit the row that occupies this column
 
-        # Walk through augmented path to find a free column
+        # Extend alternated path until we find a free column or a wall
         new_path, path_found = __search_augmented_path(
             inversionVector[j],
             cost_matrix,
@@ -158,10 +175,13 @@ def __search_augmented_path(
             T,
             path_found=path_found,
         )
+
+        # Build the alternated path
         path.extend(new_path)
         if path_found:
-            # Break search and return result
+            # An augmented path was found, stop the search
             break
 
-    # Return path and visited rows, columns
+    # Return the alternated path
+    # (if path_found = True it's an augmented path)
     return path, path_found

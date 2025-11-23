@@ -7,7 +7,7 @@ Python implementation of the Munkres (Hungarian) algorithm for solving assignmen
 ```py
 from pymunkres import munkres
 
-cost = [
+cost_matrix = [
     [10, 5, 13, 15, 16],
     [3, 9, 18, 13, 6],
     [10, 7, 2, 2, 2],
@@ -15,7 +15,7 @@ cost = [
     [7, 9, 10, 4, 12],
 ]
 
-assignments, inversions, is_optimal = munkres(cost)
+assignments, inversions, is_optimal = munkres(cost_matrix)
 print("row -> col:", assignments)
 print("col -> row:", inversions)
 print("optimal:", is_optimal)
@@ -39,3 +39,11 @@ To run the tests:
     - `python -m unittest discover`
 - Or run the single test:
     - `python -m unittest tests.test_optimal`
+
+## Contributing
+
+This repository is in the early stages of development and requires thorough testing, particularly for edge cases. Contributions are highly welcome and will help us move toward a stable release.
+
+## References
+
+This project aims to provide a modern alternative to the now-abandoned [bmc/munkres](https://github.com/bmc/munkres) implementation. However, it may not yet cover all edge cases. For reference or production use, you may still need to consult the original `bmc/munkres` repository.
