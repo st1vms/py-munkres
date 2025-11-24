@@ -70,7 +70,7 @@ def munkres(
                 )
 
                 if abs(delta) < __EPS:
-                    # In theory this should not happen,
+                    # In theory this should not happen, floating-point rounding or pathological matrices could trigger this.
                     # if it happens return assigments with path_found = False
                     break
 
@@ -129,20 +129,23 @@ def __reduced_cost(
 
 def __search_augmented_path(
     row_i: int,
-    cost_matrix: int,
+    cost_matrix: list[list[int | float]],
     N: int,
     inversionVector: list[int | float],
     u_potential: list[int | float],
     v_potential: list[int | float],
-    S: set[int | float],
-    T: set[int | float],
+    S: set[int],
+    T: set[int],
     path_found: bool = False,
 ) -> tuple[list[tuple[int]], bool]:
+
+    # TODO Replace recursion with iterative approach as it may hit recursion limit
 
     # Initialize (sub)path
     path = []
     for j in range(len(cost_matrix[row_i])):
         # Find zeroed reduced cost in this row
+        # NOTE Reduced cost may be cached
         rc = __reduced_cost(cost_matrix, u_potential, v_potential, row_i, j)
         if abs(rc) > __EPS or j in T:  # Also skip visited columns
             continue
