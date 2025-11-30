@@ -43,6 +43,7 @@ To run the tests:
 ## Contributing
 
 This repository is in the early stages of development and requires thorough testing, particularly for edge cases. Contributions are highly welcome and will help us move toward a stable release.
+When creating a pull request, please point your changes to the latest dev-* branch.
 
 ## References
 
