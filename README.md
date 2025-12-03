@@ -43,7 +43,16 @@ To run the tests:
 ## Contributing
 
 This repository is in the early stages of development and requires thorough testing, particularly for edge cases. Contributions are highly welcome and will help us move toward a stable release.
-When creating a pull request, please point your changes to the latest dev-* branch.
+
+
+## 🪜 Roadmap
+
+* [ ] Out of the box support for rectangular and irregular matrices
+* [ ] Logic for disallowing specific assignments
+* [ ] Iterative approach for `__search_augmented_path`, in order to avoid recursion depth limit with large cost matrices
+* [ ] Numpy
+* [ ] Pre-release revision and test freezing
+
 
 ## References
 
