@@ -2,7 +2,7 @@
 
 Python implementation of the Munkres (Hungarian) algorithm for solving assignment problems (minimum-cost bipartite matching), typical complexity is O(n^3).
 
-## Example usage
+## Example usage with cost matrix
 
 ```py
 from pymunkres import munkres
@@ -16,20 +16,41 @@ cost_matrix = [
 ]
 
 assignments, inversions, is_optimal = munkres(cost_matrix)
-print("row -> col:", assignments)
-print("col -> row:", inversions)
+print("row i -> col j:", assignments) # [1, 0, 4, 2, 3]
+print("col j -> row i:", inversions) # [1, 0, 3, 4, 2]
 print("optimal:", is_optimal)
 ```
 
+## Example usage with inputs
+
+```py
+from pymunkres import make_cost_matrix, munkres
+
+workers = [1.0, 4.0, 10.0]
+tasks = [2.0, 3.5]
+
+cost_function = lambda a,b,i,j: abs(a-b)
+
+cost_matrix = make_cost_matrix(workers, tasks, cost_function)
+
+assignments, inversions, is_optimal = munkres(cost_matrix)
+print("row i -> col j:", assignments) # [0, 1, -1]
+print("col j -> row i:", inversions) # [0, 1]
+print("optimal:", is_optimal) # True
+```
+
 Cost matrix
-- The cost matrix is a 2-D list (N x N) where cost[i][j] is the numeric cost of assigning row i to column j.
-- Rows typically represent "agents" (e.g., workers), columns represent "tasks"; the algorithm finds assignments that minimize the total cost.
-- Entries can be integers or floats. The matrix must be non-empty and square (equal number of rows and columns); rectangular and irregular matrices must be filled with zero costs or a default cost appropriate to the problem.
+
+- The cost matrix is a 2-D list (N x M) where cost[i][j] is the numeric cost of assigning row i to column j.
+- Rows typically represent "agents" (e.g., workers), columns represent "tasks" (e.g., jobs); the algorithm finds assignments that minimize the total cost.
+- Entries can be integers or floats. When there are fewer jobs than workers, or vice versa, the resulting rectangular cost matrix is ​​filled with predefined costs, which in most cases can be 0, but can also be a specific value that best fits the problem.
+
 
 Return values:
-- `assignments` (***list[int]***): `assignments[i] = j` if row `i` is assigned to column `j`, or `-1` if **unassigned**.
-- `inversions` (***list[int]***): `inversions[j] = i` if column `j` is assigned to row `i`, or `-1` if **free**.
-- `is_optimal` (***bool***): indicates whether the algorithm's potentials certify optimality.
+
+- `assignments` (***list[int]***): `assignments[i] = j` if the worker at row `i` is assigned to the job at column `j`, or `-1` if **unassigned** or assigned to a nonexistent job/column.
+- `inversions` (***list[int]***): `inversions[j] = i` if the job at column `j` is assigned to the worker at row `i`, or `-1` if **free** or assigned to a nonexistent worker/row.
+- `is_optimal` (***bool***): Indicates whether the algorithm's potentials certify optimality.
 
 ## Tests
 Basic unittests are included in `tests/` folder.
@@ -47,7 +68,8 @@ This repository is in the early stages of development and requires thorough test
 
 ## 🪜 Roadmap
 
-* [ ] Out of the box support for rectangular and irregular matrices
+* [x] Out of the box support for rectangular matrices
+* [ ] Support for both minimization and maximization problems
 * [ ] Logic for disallowing specific assignments
 * [ ] Iterative approach for `__search_augmented_path`, in order to avoid recursion depth limit with large cost matrices
 * [ ] Numpy
