@@ -115,6 +115,39 @@ class Test_OptimalMaximization(unittest.TestCase):
         ),
     ]
 
+    test_cases_square_disallow = [
+        # Square (Disallow) 1 (3x3)
+        (
+            [
+                [5, 9, 0],
+                [10, 0, 2],
+                [8, 0, 4],
+            ],
+            [1, 0, 2],
+            23,
+            {
+                0: {2},  # Disallow Worker 0 -> Job 2
+                1: {1},  # Disallow Worker 1 -> Job 1
+                2: {1},  # Disallow Worker 2 -> Job 1
+            },
+        ),
+        # Square (Disallow) 2 (3x3)
+        (
+            [
+                [5, 9, 0],
+                [10, 0, 2],
+                [0, 0, 0],
+            ],
+            [1, 0, -1],
+            19,
+            {
+                0: {2},
+                1: {1},
+                2: {0, 1, 2},  # Disallow Worker 2 -> Job 0, 1, 2
+            },
+        ),
+    ]
+
     test_cases_neg_square = [
         # Negative Square 1 (3x3)
         (
@@ -271,6 +304,39 @@ class Test_OptimalMaximization(unittest.TestCase):
         # fmt: on
     ]
 
+    test_cases_float_square_disallow = [
+        # Floating Square (Disallow) 1 (3x3)
+        (
+            [
+                [5.1, 9.2, 0],
+                [10.3, 0, 2.4],
+                [8.5, 0, 4.6],
+            ],
+            [1, 0, 2],
+            24.1,
+            {
+                0: {2},
+                1: {1},
+                2: {1},
+            },
+        ),
+        # Floating Square (Disallow) 2 (3x3)
+        (
+            [
+                [5.1, 9.2, 0],
+                [10.3, 0, 2.4],
+                [0, 0, 0],
+            ],
+            [1, 0, -1],
+            19.5,
+            {
+                0: {2},
+                1: {1},
+                2: {0, 1, 2},
+            },
+        ),
+    ]
+
     test_cases_float_rect = [
         # Floating Rectangular 1 (5x4)
         (
@@ -283,6 +349,27 @@ class Test_OptimalMaximization(unittest.TestCase):
             ],
             [-1, 2, 0, 3, 1],
             262.5,
+        )
+    ]
+
+    test_cases_float_rect_disallow = [
+        # Floating Rectangular (Disallow) 1 (4x3)
+        (
+            [
+                [0, 161.0, 0],
+                [0, 1.0, 0],
+                [0, 157.0, 0],
+                [37.0, 0, 5.0],
+            ],
+            [-1, -1, 1, 0],
+            194.0,
+            {
+                0: {0, 2},
+                1: {0, 2},
+                2: {0, 2},
+                3: {1},
+            },
+            False,  # Unsolvable
         )
     ]
 
@@ -302,23 +389,43 @@ class Test_OptimalMaximization(unittest.TestCase):
     ]
 
     def _test_optimal(self, i, test_case, is_float: bool = False):
-        cost_matrix, exp_assignments, exp_cost = test_case
-        assignments, inversions, is_optimal = munkres(cost_matrix, maximization=True)
-        total_cost = sum(
-            cost_matrix[i][j] if j != -1 else 0 for i, j in enumerate(assignments)
+
+        solvable = True
+        disallowment_map = {}
+        if len(test_case) == 3:
+            profit_matrix, exp_assignments, exp_profit = test_case
+        elif len(test_case) == 4:
+            profit_matrix, exp_assignments, exp_profit, disallowment_map = test_case
+        elif len(test_case) == 5:
+            profit_matrix, exp_assignments, exp_profit, disallowment_map, solvable = (
+                test_case
+            )
+
+        assignments, inversions, is_optimal = munkres(
+            profit_matrix, disallowment_map=disallowment_map, maximization=True
+        )
+        total_profit = sum(
+            profit_matrix[i][j] if j != -1 else 0 for i, j in enumerate(assignments)
         )
         print(
-            f"\ntest_optimal_max#{i+1} {exp_assignments=}, {assignments=}, {inversions=}, {total_cost=}"
+            f"\ntest_optimal_max#{i+1} {exp_assignments=}, {assignments=}, {inversions=}, {total_profit=}"
         )
         self.assertSequenceEqual(assignments, exp_assignments)
         if is_float:
-            self.assertAlmostEqual(exp_cost, total_cost)
+            self.assertAlmostEqual(exp_profit, total_profit)
         else:
-            self.assertEqual(exp_cost, total_cost)
-        self.assertTrue(is_optimal)
+            self.assertEqual(exp_profit, total_profit)
+
+        # Unsolvable matrices will not reach optimal solution
+        if solvable:
+            self.assertTrue(is_optimal)
 
     def test_optimal_square(self):
         for i, test_case in enumerate(self.test_cases_square):
+            self._test_optimal(i, test_case)
+
+    def test_optimal_square_disallow(self):
+        for i, test_case in enumerate(self.test_cases_square_disallow):
             self._test_optimal(i, test_case)
 
     def test_optimal_neg_square(self):
@@ -343,6 +450,14 @@ class Test_OptimalMaximization(unittest.TestCase):
 
     def test_optimal_float_square_neg(self):
         for i, test_case in enumerate(self.test_cases_float_square_neg):
+            self._test_optimal(i, test_case, is_float=True)
+
+    def test_optimal_float_square_disallow(self):
+        for i, test_case in enumerate(self.test_cases_float_square_disallow):
+            self._test_optimal(i, test_case, is_float=True)
+
+    def test_optimal_float_rect_disallow(self):
+        for i, test_case in enumerate(self.test_cases_float_rect_disallow):
             self._test_optimal(i, test_case, is_float=True)
 
 

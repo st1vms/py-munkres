@@ -115,6 +115,71 @@ class Test_OptimalMinimization(unittest.TestCase):
         ),
     ]
 
+    test_cases_square_disallow = [
+        # Square (Disallow) 1 (3x3)
+        (
+            [
+                [5, 9, 0],
+                [10, 0, 2],
+                [8, 0, 4],
+            ],
+            [1, 2, 0],
+            19,
+            {
+                0: {2},  # Disallow Worker 0 -> Job 2
+                1: {1},  # Disallow Worker 1 -> Job 1
+                2: {1},  # Disallow Worker 2 -> Job 1
+            },
+        ),
+        # Square (Disallow) 2 (3x3)
+        (
+            [
+                [5, 9, 0],
+                [10, 0, 2],
+                [0, 0, 0],
+            ],
+            [0, 2, -1],
+            7,
+            {
+                0: {2},
+                1: {1},
+                2: {0, 1, 2},  # Disallow Worker 2 -> Job 0, 1, 2
+            },
+        ),
+        # Square (Disallow) 3 (4x4)
+        (
+            [
+                [1, 0, 0, 0],
+                [0, 2, 0, 0],
+                [0, 0, 3, 0],
+                [0, 0, 0, 4],
+            ],
+            [0, 1, 2, 3],
+            10,
+            {
+                0: {1, 2, 3},
+                1: {0, 2, 3},
+                2: {0, 1, 3},
+                3: {0, 1, 2},
+            },
+        ),
+        # Square (Disallow) 4 (4x4)
+        (
+            [
+                [4, 5, 6, 0],
+                [1, 9, 12, 11],
+                [0, 5, 4, 0],
+                [12, 12, 12, 10],
+            ],
+            [1, 0, 2, 3],
+            20,
+            {
+                0: {3},
+                2: {0, 3},
+            },
+        ),
+    ]
+
     test_cases_neg_square = [
         # Negative Square 1 (3x3)
         (
@@ -275,6 +340,127 @@ class Test_OptimalMinimization(unittest.TestCase):
         # fmt: on
     ]
 
+    test_cases_float_square_disallow = [
+        # Floating Square (Disallow) 1 (3x3)
+        (
+            [
+                [5.1, 9.2, 0],
+                [10.3, 0, 2.4],
+                [8.5, 0, 4.6],
+            ],
+            [1, 2, 0],
+            20.1,
+            {
+                0: {2},
+                1: {1},
+                2: {1},
+            },
+        ),
+        # Floating Square (Disallow) 2 (3x3)
+        (
+            [
+                [5.1, 9.2, 0],
+                [10.3, 0, 2.4],
+                [0, 0, 0],
+            ],
+            [0, 2, -1],
+            7.5,
+            {
+                0: {2},
+                1: {1},
+                2: {0, 1, 2},
+            },
+        ),
+        # Floating Square (Disallow) 3 (4x4)
+        (
+            [
+                [1.1, 0, 0, 0],
+                [0, 2.2, 0, 0],
+                [0, 0, 3.3, 0],
+                [0, 0, 0, 4.4],
+            ],
+            [0, 1, 2, 3],
+            11.0,
+            {
+                0: {1, 2, 3},
+                1: {0, 2, 3},
+                2: {0, 1, 3},
+                3: {0, 1, 2},
+            },
+        ),
+        # Floating Square (Disallow) 4 (4x4)
+        (
+            [
+                [4.001, 5.002, 6.003, 0],
+                [1.004, 9.005, 12.006, 11.007],
+                [0, 5.008, 4.009, 0],
+                [12.01, 12.011, 12.012, 10.013],
+            ],
+            [1, 0, 2, 3],
+            20.028,
+            {
+                0: {3},
+                2: {0, 3},
+            },
+        ),
+        # fmt: off
+        # Floating Square (Disallow) 5 (22x22)
+        (
+            [
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.001, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.001, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.001, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.001, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.001, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.001, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.001, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.001, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.001],
+                [0, 0.11687445, 0, 0, 0.01319788, 0.07509257, 0, 0, 0, 0.74228317, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0.81087935, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0.8408466, 0, 0, 0, 0, 0.01194389, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0.82994211, 0, 0, 0, 0.11468516, 0, 0, 0, 0.11173505, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0.18796507, 0, 0.04002318, 0, 0, 0, 0, 0, 0.75883335, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0.71545464, 0, 0, 0, 0, 0, 0.02748488, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0.78470564, 0, 0, 0, 0, 0, 0, 0, 0.14829198, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0.10870609, 0, 0, 0, 0.8918677, 0, 0, 0, 0.06306644, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.63844085, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0.7442354, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0.09850549, 0, 0, 0.18638258, 0.2769244, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0.73182464, 0, 0, 0.46443561, 0.38589284, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0.29510278, 0, 0, 0, 0, 0, 0, 0, 0.09666032, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            ],
+            [13, 14, 15, 16, 17, 18, 19, 20, 21, 4, 3, 9, 5, 8, -1, -1, 1, 12, 6, 7, 11, 0],
+            3.98942308,
+            {
+                0: {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16, 17, 18, 19, 20, 21}, 
+                1: {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 16, 17, 18, 19, 20, 21}, 
+                2: {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 18, 19, 20, 21}, 
+                3: {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 21}, 
+                4: {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 19, 20, 21}, 
+                5: {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 19, 20, 21}, 
+                6: {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 20, 21}, 
+                7: {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 21}, 
+                8: {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20}, 
+                9: {0, 2, 3, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+                10: {0, 1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+                11: {0, 1, 2, 3, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+                12: {0, 2, 3, 4, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+                13: {1, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+                14: {0, 1, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+                15: {1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+                16: {0, 2, 3, 4, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+                17: {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+                18: {0, 1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+                19: {0, 1, 2, 3, 4, 5, 6, 8, 9, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+                20: {0, 1, 2, 3, 4, 5, 6, 8, 9, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+                21: {1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+            },
+            False # Unsolvable
+        ),
+        # fmt: on
+    ]
+
     test_cases_float_rect = [
         # Floating Rectangular 1 (5x4)
         (
@@ -290,6 +476,27 @@ class Test_OptimalMinimization(unittest.TestCase):
         )
     ]
 
+    test_cases_float_rect_disallow = [
+        # Floating Rectangular (Disallow) 1 (4x3)
+        (
+            [
+                [0, 161.0, 0],
+                [0, 1.0, 0],
+                [0, 157.0, 0],
+                [37.0, 0, 5.0],
+            ],
+            [-1, -1, 1, 0],
+            194.0,
+            {
+                0: {0, 2},
+                1: {0, 2},
+                2: {0, 2},
+                3: {1},
+            },
+            False,  # Unsolvable
+        )
+    ]
+
     test_cases_float_square_neg = [
         # Float Negative Square 1 (5x5)
         (
@@ -300,13 +507,27 @@ class Test_OptimalMinimization(unittest.TestCase):
                 [-59.16, -43.17, -97.18, -88.19, -48.2],
                 [-52.21, -19.22, -89.23, -60.24, -60.25],
             ],
-            [0, 1, 3, 2, 4], -392.65,
+            [0, 1, 3, 2, 4],
+            -392.65,
         ),
     ]
 
     def _test_optimal(self, i, test_case, is_float: bool = False):
-        cost_matrix, exp_assignments, exp_cost = test_case
-        assignments, inversions, is_optimal = munkres(cost_matrix)
+
+        solvable = True
+        disallowment_map = {}
+        if len(test_case) == 3:
+            cost_matrix, exp_assignments, exp_cost = test_case
+        elif len(test_case) == 4:
+            cost_matrix, exp_assignments, exp_cost, disallowment_map = test_case
+        elif len(test_case) == 5:
+            cost_matrix, exp_assignments, exp_cost, disallowment_map, solvable = (
+                test_case
+            )
+
+        assignments, inversions, is_optimal = munkres(
+            cost_matrix, disallowment_map=disallowment_map
+        )
         total_cost = sum(
             cost_matrix[i][j] if j != -1 else 0 for i, j in enumerate(assignments)
         )
@@ -318,7 +539,10 @@ class Test_OptimalMinimization(unittest.TestCase):
             self.assertAlmostEqual(exp_cost, total_cost)
         else:
             self.assertEqual(exp_cost, total_cost)
-        self.assertTrue(is_optimal)
+
+        # Unsolvable matrices will not reach optimal solution
+        if solvable:
+            self.assertTrue(is_optimal)
 
     def test_optimal_square(self):
         for i, test_case in enumerate(self.test_cases_square):
@@ -326,6 +550,10 @@ class Test_OptimalMinimization(unittest.TestCase):
 
     def test_optimal_neg_square(self):
         for i, test_case in enumerate(self.test_cases_neg_square):
+            self._test_optimal(i, test_case)
+
+    def test_optimal_square_disallow(self):
+        for i, test_case in enumerate(self.test_cases_square_disallow):
             self._test_optimal(i, test_case)
 
     def test_optimal_rect(self):
@@ -346,6 +574,14 @@ class Test_OptimalMinimization(unittest.TestCase):
 
     def test_optimal_float_square_neg(self):
         for i, test_case in enumerate(self.test_cases_float_square_neg):
+            self._test_optimal(i, test_case, is_float=True)
+
+    def test_optimal_float_square_disallow(self):
+        for i, test_case in enumerate(self.test_cases_float_square_disallow):
+            self._test_optimal(i, test_case, is_float=True)
+
+    def test_optimal_float_rect_disallow(self):
+        for i, test_case in enumerate(self.test_cases_float_rect_disallow):
             self._test_optimal(i, test_case, is_float=True)
 
 

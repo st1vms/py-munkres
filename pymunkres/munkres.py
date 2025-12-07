@@ -1,6 +1,6 @@
 """Munkres Algorithm implementation (Hungarian Algorithm)"""
 
-from typing import Sequence, Callable, Any
+from typing import Sequence, Callable, Any, Tuple, List, Dict, Set
 
 # NOTE If using numpy this should not be needed
 from math import isnan
@@ -12,7 +12,7 @@ def make_cost_matrix(
     workers: Sequence,
     jobs: Sequence,
     cost_function: Callable[[Any, Any, int, int], float],
-) -> list[list[float]]:
+) -> List[List[float]]:
     """
     Utility function to create a cost matrix by calculating the cost of pairing every
     element from the workers sequence with every element from the jobs sequence.
@@ -47,10 +47,11 @@ def make_cost_matrix(
 
 
 def munkres(
-    cost_matrix: list[list[float]],
+    cost_matrix: List[List[float]],
     maximization: bool = False,
     pad_cost: float = 0,
-) -> tuple[list[int], list[int], bool]:
+    disallowment_map: Dict[int, Set[int]] = {},
+) -> Tuple[List[int], List[int], bool]:
     """
     Computes the minimum cost bipartite matching on a rectangular (N x M) cost matrix.
 
@@ -59,8 +60,10 @@ def munkres(
     ##### Cost matrix
 
     - The cost matrix is a 2-D list (N x M) where cost[i][j] is the numeric cost of assigning row i to column j.
-    - Rows typically represent "agents" (e.g., workers), columns represent "tasks" (e.g., jobs); the algorithm computes the assignment that minimizes (or maximizes) the total cost or profit.
-    - Entries can be integers or floats. When there are fewer jobs than workers, or vice versa, the resulting rectangular cost matrix is ​​filled with predefined costs, which in most cases can be 0, but can also be a specific value that best fits the problem.
+    - Rows typically represent "agents" (e.g., workers), columns represent "tasks" (e.g., jobs);
+    the algorithm computes the assignment that minimizes (or maximizes) the total cost or profit.
+    - Entries can be integers or floats. When there are fewer jobs than workers, or vice versa,
+    the resulting rectangular cost matrix is ​​filled with predefined costs, which in most cases can be 0, but can also be a specific value that best fits the problem.
 
     ##### Maximization flag
 
@@ -71,10 +74,18 @@ def munkres(
     `pad_cost` is an optional floating point value (defaults to 0) that will be used as the default cost for padded assignments.
     You can usually leave this to default for most of the problems, but you can also choose a specific value that best fits your problem.
 
+    ##### Disallowment Map
+
+    To disallow specific assignments, you can set `disallowment_map`, a dictionary that maps worker row indices to sets of non-assignable task column indices.
+
+    For example, `disallowment_map = {0: {1,2,3}, 3: {1}}` would prevent worker 0 from being assigned to jobs 1, 2, 3, and worker 3 from being assigned to job 1.
+
+    Each of these assignments will always have an infinite cost, and if the optimal solution still includes any of these assignments, they will be set to unassigned in post-processing.
+
     #### Return values
 
-    - `assignments` (***list[int]***): `assignments[i] = j` if the worker at row `i` is assigned to the job at column `j`, or `-1` if **unassigned** or assigned to a nonexistent job/column.
-    - `inversions` (***list[int]***): `inversions[j] = i` if the job at column `j` is assigned to the worker at row `i`, or `-1` if **free** or assigned to a nonexistent worker/row.
+    - `assignments` (***List[int]***): `assignments[i] = j` if the worker at row `i` is assigned to the job at column `j`, or `-1` if **unassigned** or assigned to a nonexistent job/column.
+    - `inversions` (***List[int]***): `inversions[j] = i` if the job at column `j` is assigned to the worker at row `i`, or `-1` if **free** or assigned to a nonexistent worker/row.
     - `is_optimal` (***bool***): Indicates whether the algorithm's potentials certify optimality.
     """
 
@@ -106,7 +117,13 @@ def munkres(
             continue
 
         row_min = min(
-            SIGN * cost_matrix[i][j] if j < M else SIGN * pad_cost for j in range(PAD_M)
+            (
+                # Disallowment check
+                float("inf")
+                if i in disallowment_map and j in disallowment_map[i]
+                else SIGN * (cost_matrix[i][j] if j < M else pad_cost)
+            )
+            for j in range(PAD_M)
         )
         if isnan(row_min):
             row_min = 0
@@ -118,11 +135,12 @@ def munkres(
     for j in range(PAD_M):
         col_min = float("inf")
         for i in range(PAD_N):
-            if i < N and j < M:
-                cost = SIGN * cost_matrix[i][j] - u[i]
-            else:
-                # If either the row or column index are in the padding zone, use padding cost
-                cost = SIGN * pad_cost - (u[i] if i < N else pad_cost)
+            cost = (
+                # Disallowment check
+                float("inf")
+                if i in disallowment_map and j in disallowment_map[i]
+                else SIGN * (cost_matrix[i][j] if i < N and j < M else pad_cost)
+            ) - u[i]
             if isnan(cost):
                 cost = 0
             col_min = min(col_min, cost)
@@ -148,7 +166,19 @@ def munkres(
 
             # Walk through the alternated path to find an augmented path
             path, path_found = __search_augmented_path(
-                i, cost_matrix, N, M, PAD_M, pad_cost, inversions, u, v, S, T, SIGN
+                i,
+                cost_matrix,
+                N,
+                M,
+                PAD_M,
+                pad_cost,
+                inversions,
+                u,
+                v,
+                S,
+                T,
+                SIGN,
+                disallowment_map,
             )
             if not path_found:
                 # Calculate delta
@@ -157,7 +187,16 @@ def munkres(
                 delta = min(
                     [
                         __reduced_cost(
-                            cost_matrix, u, v, row, col, N, M, pad_cost, SIGN
+                            cost_matrix,
+                            u,
+                            v,
+                            row,
+                            col,
+                            N,
+                            M,
+                            pad_cost,
+                            SIGN,
+                            disallowment_map,
                         )
                         for row in S  # All visited rows
                         for col in range(PAD_M)
@@ -203,21 +242,32 @@ def munkres(
     # Padded assignments and inversions will be reduced to the actual size of the input.
     # Optimality checking considers padded assignments.
     return (
-        [assignment if assignment < M else -1 for assignment in Z[:N]],
-        [inversion if inversion < N else -1 for inversion in inversions[:M]],
-        __optimality_check(cost_matrix, Z, u, v, N, M, pad_cost, SIGN),
+        [
+            # Filter any disallowed assignment from the optimal solution
+            -1 if j >= M or i in disallowment_map and j in disallowment_map[i] else j
+            for i, j in enumerate(Z[:N])
+        ],
+        [
+            # Filter any disallowed assignment from the optimal solution
+            -1 if i >= N or i in disallowment_map and j in disallowment_map[i] else i
+            for j, i in enumerate(inversions[:M])
+        ],
+        __optimality_check(
+            cost_matrix, Z, u, v, N, M, pad_cost, SIGN, disallowment_map
+        ),
     )
 
 
 def __optimality_check(
-    cost_matrix: list[list[float]],
-    assignments: list[int],
-    u_potentials: list[float],
-    v_potentials: list[float],
+    cost_matrix: List[List[float]],
+    assignments: List[int],
+    u_potentials: List[float],
+    v_potentials: List[float],
     N: int,
     M: int,
     pad_cost: float,
     sign: int,
+    disallowment_map: Dict[int, Set[int]],
 ) -> bool:
     # For the solution to be optimal:
     # The sum of potentials must be equal the sum of the total cost of assignments
@@ -225,7 +275,7 @@ def __optimality_check(
     v_sum = 0
     cost_sum = 0
     for i, j in enumerate(assignments):
-        if j == -1:
+        if j == -1 or (i in disallowment_map and j in disallowment_map[i]):
             continue
         u_sum += u_potentials[i]
         v_sum += v_potentials[j]
@@ -237,7 +287,16 @@ def __optimality_check(
         if (
             abs(
                 __reduced_cost(
-                    cost_matrix, u_potentials, v_potentials, i, j, N, M, pad_cost, sign
+                    cost_matrix,
+                    u_potentials,
+                    v_potentials,
+                    i,
+                    j,
+                    N,
+                    M,
+                    pad_cost,
+                    sign,
+                    disallowment_map,
                 )
             )
             >= __EPS
@@ -251,22 +310,28 @@ def __optimality_check(
 
 
 def __reduced_cost(
-    cost_matrix: list[list[float]],
-    u_potentials: list[float],
-    v_potentials: list[float],
+    cost_matrix: List[List[float]],
+    u_potentials: List[float],
+    v_potentials: List[float],
     i: int,
     j: int,
     N: int,
     M: int,
     pad_cost: float,
     sign: int,
+    disallowment_map: Dict[int, Set[int]],
 ) -> float:
-    if i < N and j < M:
-        # Reduced cost
-        rc = sign * cost_matrix[i][j] - u_potentials[i] - v_potentials[j]
-    else:
-        # If in padding dimension, use padding cost
-        rc = sign * pad_cost - u_potentials[i] - v_potentials[j]
+    # Reduced cost
+    rc = (
+        (
+            # Disallowment check
+            float("inf")
+            if i in disallowment_map and j in disallowment_map[i]
+            else sign * (cost_matrix[i][j] if i < N and j < M else pad_cost)
+        )
+        - u_potentials[i]
+        - v_potentials[j]
+    )
 
     if isnan(rc):
         rc = 0
@@ -277,19 +342,20 @@ def __reduced_cost(
 
 def __search_augmented_path(
     row_i: int,
-    cost_matrix: list[list[float]],
+    cost_matrix: List[List[float]],
     N: int,
     M: int,
     PAD_M: int,
     pad_cost: float,
-    inversionVector: list[int],
-    u_potential: list[float],
-    v_potential: list[float],
-    S: set[int],
-    T: set[int],
+    inversionVector: List[int],
+    u_potential: List[float],
+    v_potential: List[float],
+    S: Set[int],
+    T: Set[int],
     sign: int,
+    disallowment_map: Dict[int, Set[int]],
     path_found: bool = False,
-) -> tuple[list[tuple[int]], bool]:
+) -> Tuple[List[Tuple[int]], bool]:
 
     # TODO Replace recursion with iterative approach as it may hit recursion limit
 
@@ -298,7 +364,16 @@ def __search_augmented_path(
     for j in range(PAD_M):
         # Find zeroed reduced cost in this row
         rc = __reduced_cost(
-            cost_matrix, u_potential, v_potential, row_i, j, N, M, pad_cost, sign
+            cost_matrix,
+            u_potential,
+            v_potential,
+            row_i,
+            j,
+            N,
+            M,
+            pad_cost,
+            sign,
+            disallowment_map,
         )
         if abs(rc) > __EPS or j in T:  # Also skip visited columns
             continue
@@ -333,6 +408,7 @@ def __search_augmented_path(
             S,
             T,
             sign,
+            disallowment_map,
             path_found=path_found,
         )
 
