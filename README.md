@@ -16,9 +16,13 @@ cost_matrix = [
 ]
 
 assignments, inversions, is_optimal = munkres(cost_matrix)
+total_cost = sum(
+    cost_matrix[i][j] if j != -1 else 0 for i, j in enumerate(assignments)
+)
 print("row i -> col j:", assignments) # [1, 0, 4, 2, 3]
 print("col j -> row i:", inversions) # [1, 0, 3, 4, 2]
-print("optimal:", is_optimal)
+print("Total cost:", total_cost) # 23
+print("optimal:", is_optimal) # True
 ```
 
 ## Example usage with inputs
@@ -39,18 +43,43 @@ print("col j -> row i:", inversions) # [0, 1]
 print("optimal:", is_optimal) # True
 ```
 
-Cost matrix
+The `munkres` function accepts a cost matrix:
 
 - The cost matrix is a 2-D list (N x M) where cost[i][j] is the numeric cost of assigning row i to column j.
-- Rows typically represent "agents" (e.g., workers), columns represent "tasks" (e.g., jobs); the algorithm finds assignments that minimize the total cost.
+- Rows typically represent "agents" (e.g., workers), columns represent "tasks" (e.g., jobs); the algorithm computes the assignment that minimizes (or maximizes) the total cost or profit.
 - Entries can be integers or floats. When there are fewer jobs than workers, or vice versa, the resulting rectangular cost matrix is ​​filled with predefined costs, which in most cases can be 0, but can also be a specific value that best fits the problem.
 
 
-Return values:
+The returned values are:
 
 - `assignments` (***list[int]***): `assignments[i] = j` if the worker at row `i` is assigned to the job at column `j`, or `-1` if **unassigned** or assigned to a nonexistent job/column.
 - `inversions` (***list[int]***): `inversions[j] = i` if the job at column `j` is assigned to the worker at row `i`, or `-1` if **free** or assigned to a nonexistent worker/row.
 - `is_optimal` (***bool***): Indicates whether the algorithm's potentials certify optimality.
+
+
+### Solving maximization problems
+
+```py
+from pymunkres import munkres
+
+profit_matrix = [
+    [10, 5, 13, 15, 16],
+    [3, 9, 18, 13, 6],
+    [10, 7, 2, 2, 2],
+    [7, 11, 9, 7, 12],
+    [7, 9, 10, 4, 12],
+]
+
+# Set maximization = True to set maximization problem
+assignments, inversions, is_optimal = munkres(profit_matrix, maximization=True)
+total_profit = sum(
+    profit_matrix[i][j] if j != -1 else 0 for i, j in enumerate(assignments)
+)
+print("row i -> col j:", assignments)  # [3, 2, 0, 1, 4]
+print("col j -> row i:", inversions)  # [2, 3, 1, 0, 4]
+print("Total profit:", total_profit) # 66
+print("optimal:", is_optimal) # True
+```
 
 ## Tests
 Basic unittests are included in `tests/` folder.
@@ -69,7 +98,7 @@ This repository is in the early stages of development and requires thorough test
 ## 🪜 Roadmap
 
 * [x] Out of the box support for rectangular matrices
-* [ ] Support for both minimization and maximization problems
+* [x] Support for both minimization and maximization problems
 * [ ] Logic for disallowing specific assignments
 * [ ] Iterative approach for `__search_augmented_path`, in order to avoid recursion depth limit with large cost matrices
 * [ ] Numpy

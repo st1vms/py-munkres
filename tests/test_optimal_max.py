@@ -2,14 +2,21 @@ from pymunkres import munkres
 import unittest
 
 
-class Test_Optimal(unittest.TestCase):
+class Test_OptimalMaximization(unittest.TestCase):
 
     test_cases_square = [
         # Square 1 (3x3)
-        ([[400, 150, 400], [400, 450, 600], [300, 225, 300]], [1, 0, 2]),
-        
+        (
+            [[400, 150, 400], [400, 450, 600], [300, 225, 300]],
+            [0, 2, 1],
+            1225,
+        ),
         # Square 2 (3x3)
-        ([[10, 10, 8], [9, 8, 1], [9, 7, 4]], [0, 2, 1]),
+        (
+            [[10, 10, 8], [9, 8, 1], [9, 7, 4]],
+            [2, 1, 0],
+            25,
+        ),
         # Square 3 (3x3)
         (
             [
@@ -17,10 +24,15 @@ class Test_Optimal(unittest.TestCase):
                 [float("inf"), float("inf"), 1],
                 [float("inf"), 7, float("inf")],
             ],
-            [0, 2, 1],
+            [2, 1, 0],
+            float("inf"),
         ),
         # Square 4 (3x3)
-        ([[5, 9, 1], [10, 3, 2], [8, 7, 4]], [2, 1, 0]),
+        (
+            [[5, 9, 1], [10, 3, 2], [8, 7, 4]],
+            [1, 0, 2],
+            23,
+        ),
         # Square 5 (5x5)
         (
             [
@@ -30,7 +42,8 @@ class Test_Optimal(unittest.TestCase):
                 [9, 28, 26, 23, 13],
                 [16, 16, 24, 6, 9],
             ],
-            [1, 2, 3, 0, 4],
+            [4, 3, 0, 1, 2],
+            130,
         ),
         # Square 6 (5x5)
         (
@@ -41,7 +54,8 @@ class Test_Optimal(unittest.TestCase):
                 [52, 42, 19, 36, 0],
                 [15, 93, 55, 80, 0],
             ],
-            [3, 4, 1, 2, 0],
+            [4, 2, 0, 3, 1],
+            262,
         ),
         # Square 7 (5x5)
         (
@@ -52,7 +66,8 @@ class Test_Optimal(unittest.TestCase):
                 [7, 11, 9, 7, 12],
                 [7, 9, 10, 4, 12],
             ],
-            [1, 0, 4, 2, 3],
+            [3, 2, 0, 1, 4],
+            66,
         ),
         # Square 8 (10x10)
         (
@@ -68,7 +83,8 @@ class Test_Optimal(unittest.TestCase):
                 [21, 25, 23, 39, 31, 37, 32, 33, 38, 1],
                 [17, 34, 40, 10, 29, 37, 40, 3, 25, 3],
             ],
-            [5, 3, 4, 0, 6, 1, 2, 8, 9, 7],
+            [0, 7, 1, 2, 9, 4, 3, 5, 8, 6],
+            359,
         ),
         # Square 9 (20x20)
         (
@@ -94,7 +110,8 @@ class Test_Optimal(unittest.TestCase):
                 [9, 6, 3, 1, 8, 5, 7, 8, 7, 2, 1, 8, 2, 8, 3, 7, 4, 8, 7, 7],
                 [8, 4, 4, 9, 7, 10, 6, 2, 1, 5, 8, 5, 1, 1, 1, 9, 1, 3, 5, 3],
             ],
-            [16, 15, 4, 1, 3, 6, 0, 11, 14, 2, 8, 17, 12, 5, 19, 13, 18, 9, 10, 7],
+            [18, 2, 13, 14, 16, 1, 4, 3, 17, 11, 15, 8, 10, 9, 6, 0, 12, 19, 7, 5],
+            193,
         ),
     ]
 
@@ -102,10 +119,11 @@ class Test_Optimal(unittest.TestCase):
         # Negative Square 1 (3x3)
         (
             [[-400, -150, -400], [-400, -450, -600], [-300, -225, -300]],
-            [0, 2, 1],
+            [1, 0, 2],
+            -850,
         ),
         # Negative Square 2 (3x3)
-        ([[-10, -10, -8], [-9, -8, -1], [-9, -7, -4]], [2, 1, 0]),
+        ([[-10, -10, -8], [-9, -8, -1], [-9, -7, -4]], [0, 2, 1], -18),
         # Negative Square 3 (3x3)
         (
             [
@@ -113,7 +131,8 @@ class Test_Optimal(unittest.TestCase):
                 [float("-inf"), float("-inf"), -1],
                 [float("-inf"), -7, float("-inf")],
             ],
-            [2, 1, 0],
+            [0, 2, 1],
+            -18,
         ),
         # Negative Square 4 (5x5)
         (
@@ -124,18 +143,20 @@ class Test_Optimal(unittest.TestCase):
                 [-7, -11, -9, -7, -12],
                 [-7, -9, -10, -4, -12],
             ],
-            [3, 2, 0, 1, 4],
+            [1, 0, 4, 2, 3],
+            -23,
         ),
         # Negative Square 5 (5x5)
         (
             [
-                [-94, -66, -100, -18, -48],
-                [-51, -63, -97, -79, -11],
-                [-37, -53, -57, -78, -28],
-                [-59, -43, -97, -88, -48],
-                [-52, -19, -89, -60, -60],
+                [94, 66, 100, 18, 48],
+                [51, 63, 97, 79, 11],
+                [37, 53, 57, 78, 28],
+                [59, 43, 97, 88, 48],
+                [52, 19, 89, 60, 60],
             ],
             [0, 1, 3, 2, 4],
+            392,
         ),
     ]
 
@@ -143,10 +164,15 @@ class Test_Optimal(unittest.TestCase):
         # Rectangular 1 (3x4)
         (
             [[400, 150, 400, 1], [400, 450, 600, 2], [300, 225, 300, 3]],
-            [1, 3, 2],
+            [0, 2, 1],
+            1225,
         ),
         # Rectangular 2 (3x4)
-        ([[10, 10, 8, 11], [9, 8, 1, 1], [9, 7, 4, 10]], [1, 3, 2]),
+        (
+            [[10, 10, 8, 11], [9, 8, 1, 1], [9, 7, 4, 10]],
+            [1, 0, 3],
+            29,
+        ),
         # Rectangular 3 (5x4)
         (
             [
@@ -156,7 +182,8 @@ class Test_Optimal(unittest.TestCase):
                 [52, 42, 19, 36],
                 [15, 93, 55, 80],
             ],
-            [1, 3, -1, 2, 0],
+            [-1, 2, 0, 3, 1],
+            262,
         ),
     ]
 
@@ -164,10 +191,15 @@ class Test_Optimal(unittest.TestCase):
         # Negative Rectangular 1 (3x4)
         (
             [[-400, -150, -400, -1], [-400, -450, -600, -2], [-300, -225, -300, -3]],
-            [0, 2, 1],
+            [1, 3, 2],
+            -452,
         ),
         # Negative Rectangular 2 (3x4)
-        ([[-10, -10, -8, -11], [-9, -8, -1, -1], [-9, -7, -4, -10]], [1, 0, 3]),
+        (
+            [[-10, -10, -8, -11], [-9, -8, -1, -1], [-9, -7, -4, -10]],
+            [1, 3, 2],
+            -15,
+        ),
     ]
 
     test_cases_float_square = [
@@ -178,7 +210,8 @@ class Test_Optimal(unittest.TestCase):
                 [10.4, 3.5, 2.6],
                 [8.7, 7.8, 4.9],
             ],
-            [2, 1, 0],
+            [1, 0, 2],
+            24.5,
         ),
         # Floating Square 2 (5x5)
         (
@@ -189,7 +222,8 @@ class Test_Optimal(unittest.TestCase):
                 [9.16, 28.17, 26.18, 23.19, 13.2],
                 [16.21, 16.22, 24.23, 6.24, 9.25],
             ],
-            [1, 2, 3, 0, 4],
+            [4, 3, 0, 1, 2],
+            130.65,
         ),
         # fmt: off
         # Floating Square 3 (10x10)
@@ -206,7 +240,7 @@ class Test_Optimal(unittest.TestCase):
                 [21.081, 25.082, 23.083, 39.084, 31.085, 37.086, 32.087, 33.088, 38.089, 1.09],
                 [17.091, 34.092, 40.093, 10.094, 29.095, 37.096, 40.097, 3.098, 25.099, 3.1],
             ],
-            [5, 3, 4, 0, 6, 1, 2, 8, 9, 7],
+            [0, 7, 1, 2, 9, 4, 3, 5, 8, 6], 359.505,
         ),
         # Floating Square 4 (20x20)
         (
@@ -232,7 +266,7 @@ class Test_Optimal(unittest.TestCase):
                 [9.0361, 6.0362, 3.0363, 1.0364, 8.0365, 5.0366, 7.0367, 8.0368, 7.0369, 2.037, 1.0371, 8.0372, 2.0373, 8.0374, 3.0375, 7.0376, 4.0377, 8.0378, 7.0379, 7.038],
                 [8.0381, 4.0382, 4.0383, 9.0384, 7.0385, 10.0386, 6.0387, 2.0388, 1.0389, 5.039, 8.0391, 5.0392, 1.0393, 1.0394, 1.0395, 9.0396, 1.0397, 3.0398, 5.0399, 3.04],
             ],
-            [16, 15, 4, 1, 3, 6, 0, 11, 14, 2, 8, 17, 12, 5, 19, 13, 18, 9, 10, 7],
+            [18, 2, 13, 14, 16, 1, 4, 3, 17, 11, 15, 8, 10, 9, 6, 0, 12, 19, 7, 5], 193.401,
         ),
         # fmt: on
     ]
@@ -247,7 +281,8 @@ class Test_Optimal(unittest.TestCase):
                 [52.13, 42.14, 19.15, 36.16],
                 [15.17, 93.18, 55.19, 80.2],
             ],
-            [1, 3, -1, 2, 0],
+            [-1, 2, 0, 3, 1],
+            262.5,
         )
     ]
 
@@ -255,26 +290,31 @@ class Test_Optimal(unittest.TestCase):
         # Float Negative Square 1 (5x5)
         (
             [
-                [-94.01, -66.02, -100.03, -18.04, -48.05],
-                [-51.06, -63.07, -97.08, -79.09, -11.1],
-                [-37.11, -53.12, -57.13, -78.14, -28.15],
-                [-59.16, -43.17, -97.18, -88.19, -48.2],
-                [-52.21, -19.22, -89.23, -60.24, -60.25],
+                [94.01, 66.02, 100.03, 18.04, 48.05],
+                [51.06, 63.07, 97.08, 79.09, 11.1],
+                [37.11, 53.12, 57.13, 78.14, 28.15],
+                [59.16, 43.17, 97.18, 88.19, 48.2],
+                [52.21, 19.22, 89.23, 60.24, 60.25],
             ],
             [0, 1, 3, 2, 4],
+            392.65,
         ),
     ]
 
-    def _test_optimal(self, i, test_case):
-        cost_matrix, exp_assignments = test_case
-        assignments, inversions, is_optimal = munkres(cost_matrix)
+    def _test_optimal(self, i, test_case, is_float: bool = False):
+        cost_matrix, exp_assignments, exp_cost = test_case
+        assignments, inversions, is_optimal = munkres(cost_matrix, maximization=True)
         total_cost = sum(
             cost_matrix[i][j] if j != -1 else 0 for i, j in enumerate(assignments)
         )
         print(
-            f"\ntest_optimal#{i+1} {exp_assignments=}, {assignments=}, {inversions=}, {total_cost=}"
+            f"\ntest_optimal_max#{i+1} {exp_assignments=}, {assignments=}, {inversions=}, {total_cost=}"
         )
         self.assertSequenceEqual(assignments, exp_assignments)
+        if is_float:
+            self.assertAlmostEqual(exp_cost, total_cost)
+        else:
+            self.assertEqual(exp_cost, total_cost)
         self.assertTrue(is_optimal)
 
     def test_optimal_square(self):
@@ -295,15 +335,15 @@ class Test_Optimal(unittest.TestCase):
 
     def test_optimal_float_square(self):
         for i, test_case in enumerate(self.test_cases_float_square):
-            self._test_optimal(i, test_case)
+            self._test_optimal(i, test_case, is_float=True)
 
     def test_optimal_float_rect(self):
         for i, test_case in enumerate(self.test_cases_float_rect):
-            self._test_optimal(i, test_case)
+            self._test_optimal(i, test_case, is_float=True)
 
-    def test_optimal_float_rect_neg(self):
+    def test_optimal_float_square_neg(self):
         for i, test_case in enumerate(self.test_cases_float_square_neg):
-            self._test_optimal(i, test_case)
+            self._test_optimal(i, test_case, is_float=True)
 
 
 if __name__ == "__main__":
