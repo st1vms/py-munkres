@@ -89,7 +89,7 @@ def munkres(
     - `is_optimal` (***bool***): Indicates whether the algorithm's potentials certify optimality.
     """
 
-    # In order to solve the maximization problem with the minimization problem, all costs get negated
+    # In order to solve the maximization problem by solving the minimization problem, all costs get negated
     SIGN = -1 if maximization else 1
 
     # Get the dimensions of the cost matrix
@@ -113,6 +113,7 @@ def munkres(
     u = []
     for i in range(PAD_N):
         if i >= N:
+            # Padding zone
             u.append(pad_cost)
             continue
 
@@ -121,11 +122,13 @@ def munkres(
                 # Disallowment check
                 float("inf")
                 if i in disallowment_map and j in disallowment_map[i]
+                # Padding check
                 else SIGN * (cost_matrix[i][j] if j < M else pad_cost)
             )
             for j in range(PAD_M)
         )
         if isnan(row_min):
+            # NaN values are converted to 0
             row_min = 0
         u.append(row_min)
 
@@ -139,12 +142,12 @@ def munkres(
                 # Disallowment check
                 float("inf")
                 if i in disallowment_map and j in disallowment_map[i]
+                # Padding check
                 else SIGN * (cost_matrix[i][j] if i < N and j < M else pad_cost)
             ) - u[i]
             if isnan(cost):
                 cost = 0
             col_min = min(col_min, cost)
-
         v.append(col_min)
 
     # Initialize (padded) assignments (Z[i] -> j)
@@ -212,23 +215,25 @@ def munkres(
 
                 # Update potentials
                 for row_i, u_i in enumerate(u):
+                    # Add delta to the potentials of all visited rows in the alternated path
                     new_u = u_i + delta if row_i in S else u_i
                     if isnan(new_u):
                         new_u = 0
                     u[row_i] = new_u
 
                 for col_j, v_j in enumerate(v):
+                    # Subtract delta from the potentials of all visited columns in the alternated path
                     new_v = v_j - delta if col_j in T else v_j
                     if isnan(new_v):
                         new_v = 0
                     v[col_j] = new_v
                 continue
 
-            # Walk through augmented path and invert each edge to assign this row
-            for edge in path:
-                row_i, col_j = edge
+            # Walk through augmented path and invert each arc to assign this row
+            for arc in path:
+                row_i, col_j = arc
 
-                # Check if this edge represents an assignment
+                # Check if this arc represents an assignment
                 if Z[row_i] == col_j:
                     # Invert the assignment
                     Z[row_i] = -1
@@ -277,6 +282,7 @@ def __optimality_check(
     for i, j in enumerate(assignments):
         if j == -1 or (i in disallowment_map and j in disallowment_map[i]):
             continue
+
         u_sum += u_potentials[i]
         v_sum += v_potentials[j]
 
@@ -302,11 +308,10 @@ def __optimality_check(
             >= __EPS
         ):
             return False
+
     optimal = u_sum + v_sum == cost_sum
-    if not optimal:
-        # Try to apply floating tolerance
-        optimal = abs(cost_sum - u_sum - v_sum) < __EPS
-    return optimal
+    # Try to apply floating tolerance
+    return optimal if optimal else abs(cost_sum - u_sum - v_sum) < __EPS
 
 
 def __reduced_cost(
@@ -327,17 +332,14 @@ def __reduced_cost(
             # Disallowment check
             float("inf")
             if i in disallowment_map and j in disallowment_map[i]
+            # Padding check
             else sign * (cost_matrix[i][j] if i < N and j < M else pad_cost)
         )
         - u_potentials[i]
         - v_potentials[j]
     )
 
-    if isnan(rc):
-        rc = 0
-
-    # The reduced cost must always be >= 0
-    return rc
+    return 0 if isnan(rc) else rc
 
 
 def __search_augmented_path(
