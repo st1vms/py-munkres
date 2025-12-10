@@ -49,7 +49,7 @@ def make_cost_matrix(
 def munkres(
     cost_matrix: List[List[float]],
     maximization: bool = False,
-    pad_cost: float = float('inf'),
+    pad_cost: float = 0,
     disallowment_map: Dict[int, Set[int]] = {},
 ) -> Tuple[List[int], List[int], bool]:
     """
