@@ -49,7 +49,7 @@ def make_cost_matrix(
 def munkres(
     cost_matrix: List[List[float]],
     maximization: bool = False,
-    pad_cost: float = 0,
+    pad_cost: float = float('inf'),
     disallowment_map: Dict[int, Set[int]] = {},
 ) -> Tuple[List[int], List[int], bool]:
     """
@@ -123,7 +123,7 @@ def munkres(
                 float("inf")
                 if i in disallowment_map and j in disallowment_map[i]
                 # Padding check
-                else SIGN * (cost_matrix[i][j] if j < M else pad_cost)
+                else (SIGN * cost_matrix[i][j] if j < M else pad_cost)
             )
             for j in range(PAD_M)
         )
@@ -143,7 +143,7 @@ def munkres(
                 float("inf")
                 if i in disallowment_map and j in disallowment_map[i]
                 # Padding check
-                else SIGN * (cost_matrix[i][j] if i < N and j < M else pad_cost)
+                else (SIGN * cost_matrix[i][j] if i < N and j < M else pad_cost)
             ) - u[i]
             if isnan(cost):
                 cost = 0
@@ -333,7 +333,7 @@ def __reduced_cost(
             float("inf")
             if i in disallowment_map and j in disallowment_map[i]
             # Padding check
-            else sign * (cost_matrix[i][j] if i < N and j < M else pad_cost)
+            else (sign * cost_matrix[i][j] if i < N and j < M else pad_cost)
         )
         - u_potentials[i]
         - v_potentials[j]
