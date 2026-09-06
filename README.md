@@ -158,8 +158,14 @@ This repository is in the early stages of development and requires thorough test
 - [x] Iterative approach for `__search_augmented_path`, in order to avoid recursion depth limit with large cost matrices
 - [x] Numpy
 - [x] Pre-release revision and test freezing
-- [ ] Benchmarking and comparisons
+- [x] Benchmarking and comparisons
 - [ ] Publishing first release
+
+## Performance Benchmarks
+
+As shown in the benchmark below, `py-munkres` runs consistently faster than `bmc/munkres`, making it a valid pure-Python substitution. However, for performance-critical production environments requiring maximum efficiency on large matrices, C-backed libraries like `scipy.optimize.linear_sum_assignment` remain the best option.
+
+![py-munkres Benchmark](benchmark.png)
 
 ## References
 
