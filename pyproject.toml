@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "py-munkres"
+version = "0.1.0"
+description = "Fast Python implementation of the Munkres (Hungarian) algorithm with NumPy support"
+readme = "README.md"
+authors = [
+    { name = "st1vms" }
+]
+license = { text = "MIT" }
+requires-python = ">=3.8"
+dependencies = []
+
+[project.optional-dependencies]
+numpy = ["numpy"]
+test = ["numpy"]

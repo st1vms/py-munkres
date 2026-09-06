@@ -6,10 +6,9 @@ Python implementation of the Munkres (Hungarian) algorithm for solving assignmen
 
 The `munkres` function accepts a cost matrix:
 
-- The cost matrix is a 2-D list (N x M) where cost[i][j] is the numeric cost of assigning row i to column j.
+- The cost matrix is a 2-D list or NumPy ndarray (N x M) where cost\[i\]\[j\] is the numeric cost of assigning row i to column j.
 - Rows typically represent "agents" (e.g., workers), columns represent "tasks" (e.g., jobs); the algorithm computes the assignment that minimizes (or maximizes) the total cost or profit.
 - Entries can be integers or floats. When there are fewer jobs than workers, or vice versa, the resulting rectangular cost matrix is ​​filled with predefined costs, which in most cases can be 0, but can also be a specific value that best fits the problem.
-
 
 The returned values are:
 
@@ -117,30 +116,51 @@ print("Total profit:", total_profit)  # 19
 print("optimal:", is_optimal)  # True
 ```
 
+### Using NumPy arrays
+
+`munkres` and `make_cost_matrix` seamlessly accept NumPy 2D arrays:
+
+```py
+import numpy as np
+from pymunkres import munkres
+
+cost_matrix = np.array([
+    [10, 5, 13],
+    [3, 9, 18],
+    [10, 7, 2],
+])
+
+assignments, inversions, is_optimal = munkres(cost_matrix)
+print("row i -> col j:", assignments)  # [1, 0, 2]
+print("optimal:", is_optimal)  # True
+```
+
 ## Tests
+
 Basic unittests are included in `tests/` folder.
 
 To run the tests:
+
 - From project root:
-    - `python -m unittest discover`
+  - `python -m unittest discover`
 - Or run single test:
-    - `python -m unittest tests.test_optimal_min`
+  - `python -m unittest tests.test_optimal_min`
 
 ## Contributing
 
 This repository is in the early stages of development and requires thorough testing, particularly for edge cases. Contributions are highly welcome and will help us move toward a stable release.
 
-
 ## 🪜 Roadmap
 
-* [x] Out of the box support for rectangular matrices
-* [x] Support for both minimization and maximization problems
-* [x] Logic for disallowing specific assignments
-* [ ] Iterative approach for `__search_augmented_path`, in order to avoid recursion depth limit with large cost matrices
-* [ ] Numpy
-* [ ] Pre-release revision and test freezing
-
+- [x] Out of the box support for rectangular matrices
+- [x] Support for both minimization and maximization problems
+- [x] Logic for disallowing specific assignments
+- [x] Iterative approach for `__search_augmented_path`, in order to avoid recursion depth limit with large cost matrices
+- [x] Numpy
+- [x] Pre-release revision and test freezing
+- [] Benchmarking and comparisons
+- [] Publishing first release
 
 ## References
 
-This project aims to provide a modern alternative to the now-abandoned [bmc/munkres](https://github.com/bmc/munkres) implementation. However, it may not yet cover all edge cases. For reference or production use, you may still need to consult the original `bmc/munkres` repository.
+This project aims to provide a modern alternative to the now-abandoned [bmc/munkres](https://github.com/bmc/munkres) implementation.
