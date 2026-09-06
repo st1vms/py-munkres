@@ -158,8 +158,8 @@ This repository is in the early stages of development and requires thorough test
 - [x] Iterative approach for `__search_augmented_path`, in order to avoid recursion depth limit with large cost matrices
 - [x] Numpy
 - [x] Pre-release revision and test freezing
-- [] Benchmarking and comparisons
-- [] Publishing first release
+- [ ] Benchmarking and comparisons
+- [ ] Publishing first release
 
 ## References
 
